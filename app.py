@@ -3,7 +3,6 @@ import cv2
 import tempfile
 import utils as utl
 import streamlit.components.v1 as components
-import time
 from stqdm import stqdm
 
 

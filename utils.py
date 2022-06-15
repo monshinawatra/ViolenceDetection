@@ -1,13 +1,9 @@
 import cv2
-import os
-import random
 import numpy as np
 from keras.models import Model, load_model
 from keras.applications import VGG16
 from collections import deque
-import pandas as pd
-from itertools import combinations
-import torch
+
 
 image_model = VGG16(include_top=True, weights='imagenet')
 transfer_layer = image_model.get_layer('fc2')
