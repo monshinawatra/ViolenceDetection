@@ -4,3 +4,4 @@ stqdm==0.0.4
 streamlit==1.10.0
 tqdm==4.64.0
 opencv-python-headless
+tensorflow
