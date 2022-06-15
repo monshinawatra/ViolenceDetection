@@ -3,14 +3,25 @@ import numpy as np
 from keras.models import Model, load_model
 from keras.applications import VGG16
 from collections import deque
-
+from keras.models import Model, Sequential
+from keras.layers import LSTM, Dense, Activation
 
 image_model = VGG16(include_top=True, weights='imagenet')
 transfer_layer = image_model.get_layer('fc2')
 image_model_transfer = Model(inputs=image_model.input,
                              outputs=transfer_layer.output)
-model_ = load_model('model/vggLSTMv4_2/modelv4_2.h5')
+# model_ = load_model('model/vggLSTMv4_2/modelv4_2.h5')
 CLASSES = ['NonViolence', 'Violence', '']
+
+model_ = Sequential()
+model_.add(LSTM(512, input_shape=(20, 4096)))
+model_.add(Dense(1024))
+model_.add(Activation('relu'))
+model_.add(Dense(50))
+model_.add(Activation('sigmoid'))
+model_.add(Dense(2))
+model_.add(Activation('softmax'))
+model_.load_weights('model/vggLSTMv4_2/model_weightsv4_2.h5')
 
 
 def get_frame(vid_path, frame):
