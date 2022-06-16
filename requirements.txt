@@ -6,7 +6,7 @@ tqdm==4.64.0
 opencv-python-headless
 tensorflow
 h5py
-pytorch
+torch
 pyyaml
 matplotlib
 torchvision
