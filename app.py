@@ -5,11 +5,8 @@ import utilities as utl
 from stqdm import stqdm
 import numpy as np
 import torch
-
-
-# def check_size():
-#     for x in st.session_state:
-#         print(x, sys.getsizeof(st.session_state[x]))
+import os
+import h5py
 
 
 def draw_bboxes(bboxes, cur_frame):
@@ -30,11 +27,6 @@ def draw_bboxes(bboxes, cur_frame):
     return cur_frame
 
 
-def get_all_pred_list():
-    frame_list = st.session_state['frames_list']
-    return utl.get_features_list(frame_list)
-
-
 def get_all_video_frames(vid_name: str):
     vid = vid_name
     prog = stqdm(range(utl.get_total_frame(vid)))
@@ -44,31 +36,16 @@ def get_all_video_frames(vid_name: str):
     return frames_list
 
 
-def get_frame(frame: np.ndarray):
-    if frame < len(st.session_state['frames_list']):
-        return st.session_state['frames_list'][frame]
-    else:
-        st.session_state.frame = 20
-        return st.session_state['frames_list'][19]
+def get_frame(no_frame):
+    with h5py.File('temp/data.h5', 'r') as f:
+        frame_list = f['frames_list'][:]
+        try:
+            frame = frame_list[no_frame]
+        except:
+            st.session_state.frame = 20
+            frame = frame_list[19]
+    return frame
 
-
-def initial_video_frames():
-    if 'frames_list' not in st.session_state:
-        st.session_state['frames_list'] = \
-            get_all_video_frames(tffile.name)
-
-    if video_file == None:
-        return
-
-    if video_file.name != st.session_state.video:
-        st.session_state.video = video_file.name
-        loading = st.markdown(open('html/loading.txt', 'r').read(),
-                              unsafe_allow_html=True)
-        
-        st.session_state['frames_list'] = \
-            get_all_video_frames(tffile.name)
-        st.session_state['pred_list'] = get_all_pred_list()
-        loading.empty()
 
 
 def probabiliy_label(prob: float, class_index: int):
@@ -97,10 +74,23 @@ def probabiliy_label(prob: float, class_index: int):
     progress_label.markdown(class_css, unsafe_allow_html=True)
 
 
+def initial_video_frames():
+    if video_file == None:
+        return
+    if st.session_state['video'] != video_file.name:
+        st.session_state['video'] = video_file.name
+        print('Change')
+        create_framelist()
+        
+        
 def update_frame():
     frame = get_frame(st.session_state.frame-1)
     temp_range = [st.session_state.frame-20, st.session_state.frame]
-    temporal_frames = st.session_state.pred_list[temp_range[0]: temp_range[1]]
+    
+    with h5py.File('temp/data.h5', 'r') as file:
+        temporal_frames = file['preds_list'][temp_range[0]: temp_range[1]]
+    
+    print('len temp', len(temporal_frames))
 
     prob, class_index = utl.predict(temporal_frames)
     probabiliy_label(prob, class_index)
@@ -130,12 +120,19 @@ def detection_config():
     detection_model.classes = [0]
 
 
+def create_framelist():
+    print('Create data')
+    with h5py.File('temp/data.h5', 'w') as file:
+        frames_list = get_all_video_frames(tffile.name)
+        file.create_dataset('frames_list', 
+                            data=frames_list) 
+        file.create_dataset('preds_list', 
+                            data=utl.get_features_list(frames_list)) 
+
+
 def app_initial():
-    if 'video' not in st.session_state:
-        st.session_state['video'] = DEMO_VIDEO
     if 'frame' not in st.session_state:
         st.session_state['frame'] = 20
-        
     if 'conf' not in st.session_state:
         st.session_state['conf'] = 0.45
     if 'iou' not in st.session_state:
@@ -147,11 +144,13 @@ def app_initial():
         tffile.name = DEMO_VIDEO
     else:
         tffile.write(video_file.read())
-
+        
+        
+    if 'video' not in st.session_state:
+        st.session_state['video'] = DEMO_VIDEO
+        create_framelist()
+        
     initial_video_frames()
-    if 'pred_list' not in st.session_state:
-        st.session_state['pred_list'] = get_all_pred_list()
-
     update_frame()
     detection_config()
 
@@ -184,7 +183,7 @@ if __name__ == '__main__':
                                   type=['mp4', 'mov', 'avi', 'asf', 'm4v'])
     DEMO_VIDEO = 'dataset/Test/Violence/v_FTSN_-_5.mp4'
     tffile = tempfile.NamedTemporaryFile(suffix='.mp4', delete=False)
-    
+
     video_label = st.markdown("""
                               <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
                               <center>
@@ -192,7 +191,6 @@ if __name__ == '__main__':
                               </center>
                               """, unsafe_allow_html=True)
     progress_label = st.empty()
-    
     _, img_frame, _ = st.columns([0.2, 1, 0.2])
     img_frame = st.empty()
     
@@ -201,7 +199,7 @@ if __name__ == '__main__':
 
     frame_slider = st.slider('Frame', min_value=20,
                              max_value=int(utl.get_total_frame(tffile.name)), 
-                             key='frame', on_change=update_frame)
+                             key='frame')
 
     try:
         main()

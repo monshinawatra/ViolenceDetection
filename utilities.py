@@ -28,7 +28,7 @@ model_ = get_lstm_model()
 model_.load_weights('model/vggLSTMv4_2/model_weightsv4_2.h5')
 
 
-def get_frame(vid_path: str, frame: np.ndarray):
+def get_frame(vid_path: str, frame: int):
     cap = cv2.VideoCapture(vid_path)
     cap.set(cv2.CAP_PROP_POS_FRAMES, frame)
     ret, frame = cap.read()
@@ -59,3 +59,11 @@ def get_features_list(frames: np.ndarray):
         prediction = image_model_transfer.predict(np.expand_dims(img, 0))
         images.append(prediction[0])
     return np.array(images)
+
+def get_frames(vid_path: str, start: int, stop: int):
+    frames = []
+    count = start
+    while count < stop:
+        frames.append(get_frame(vid_path, count))
+        count += 1
+    return frames
