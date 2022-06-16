@@ -1,0 +1,4 @@
+<style>
+    [data-testid='stSidebar'][aria-expanded="true"] > div:first-child{padding: 2% 6%}
+    [data-testid='stSidebar'][aria-expanded="false"] > div:first-child{padding: 2% 6%}
+</style>

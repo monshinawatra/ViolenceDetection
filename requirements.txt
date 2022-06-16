@@ -6,3 +6,8 @@ tqdm==4.64.0
 opencv-python-headless
 tensorflow
 h5py
+pytorch
+pyyaml
+matplotlib
+torchvision
+seaborn
