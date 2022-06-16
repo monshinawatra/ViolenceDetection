@@ -5,7 +5,6 @@ import utilities as utl
 from stqdm import stqdm
 import numpy as np
 import torch
-import sys
 
 
 # def check_size():
@@ -165,8 +164,8 @@ def main():
                       max_value=1.0, value=0.45, step=0.01, key='iou', on_change=on_config_change)
     st.sidebar.slider('Confidence', min_value=0.01,
                       max_value=1.0, value=0.45, step=0.01, key='conf', on_change=on_config_change)
-    color = st.sidebar.color_picker('Bounding box color', 
-                                    value='#47E242', 
+    color = st.sidebar.color_picker('Bounding box color',
+                                    value='#47E242',
                                     key='box_color',
                                     on_change=on_config_change)
     st.sidebar.markdown('---')
@@ -189,7 +188,7 @@ if __name__ == '__main__':
     video_label = st.markdown("""
                               <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
                               <center>
-                              <h2> Video frame</h2>
+                              <h2>Video frame</h2>
                               </center>
                               """, unsafe_allow_html=True)
     progress_label = st.empty()
@@ -200,8 +199,9 @@ if __name__ == '__main__':
     detection_model = get_detection_model()
     app_initial()
 
-    frame_slider = st.slider('Frame', min_value=20, max_value=int(
-                             utl.get_total_frame(tffile.name)), key='frame', on_change=update_frame)
+    frame_slider = st.slider('Frame', min_value=20,
+                             max_value=int(utl.get_total_frame(tffile.name)), 
+                             key='frame', on_change=update_frame)
 
     try:
         main()
