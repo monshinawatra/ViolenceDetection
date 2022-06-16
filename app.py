@@ -5,6 +5,12 @@ import utilities as utl
 from stqdm import stqdm
 import numpy as np
 import torch
+import sys
+
+
+# def check_size():
+#     for x in st.session_state:
+#         print(x, sys.getsizeof(st.session_state[x]))
 
 
 def draw_bboxes(bboxes, cur_frame):
@@ -47,7 +53,6 @@ def get_frame(frame: np.ndarray):
         return st.session_state['frames_list'][19]
 
 
-
 def initial_video_frames():
     if 'frames_list' not in st.session_state:
         st.session_state['frames_list'] = \
@@ -66,7 +71,7 @@ def initial_video_frames():
         st.session_state['pred_list'] = get_all_pred_list()
         loading.empty()
 
-        
+
 def probabiliy_label(prob: float, class_index: int):
     classes = {0: "NonViolence", 1: "Violence"}
     icons = {0: open('html/nonviolence_icon.txt', 'r').read(),
@@ -106,7 +111,7 @@ def update_frame():
         results = detection_model(render_frame)
         render_frame = draw_bboxes(results, render_frame)
         # render_frame = np.squeeze(results.render())
-        
+    
     img_frame.image(cv2.cvtColor(render_frame, cv2.COLOR_BGR2RGB), use_column_width=True)
 
 
@@ -123,7 +128,7 @@ def on_config_change():
 def detection_config():
     detection_model.iou = st.session_state.iou
     detection_model.conf = st.session_state.conf
-    
+    detection_model.classes = [0]
 
 
 def app_initial():
@@ -153,19 +158,19 @@ def app_initial():
 
 
 def main():
+    
     st.sidebar.markdown('---')
     st.sidebar.write('Detection')
     st.sidebar.slider('NMS IoU', min_value=0.01,
                       max_value=1.0, value=0.45, step=0.01, key='iou', on_change=on_config_change)
     st.sidebar.slider('Confidence', min_value=0.01,
                       max_value=1.0, value=0.45, step=0.01, key='conf', on_change=on_config_change)
-    st.sidebar.markdown('---')
-    
-    st.sidebar.write('Video Setting')
     color = st.sidebar.color_picker('Bounding box color', 
                                     value='#47E242', 
                                     key='box_color',
                                     on_change=on_config_change)
+    st.sidebar.markdown('---')
+    st.sidebar.write('Video Setting (In develop...)')
     save_img = st.sidebar.checkbox('Save detection image')
     enabled_gpu = st.sidebar.checkbox('Enable GPU')
     st.sidebar.button('Extract Video')
@@ -202,3 +207,4 @@ if __name__ == '__main__':
         main()
     except SystemExit:
         pass
+    # check_size()
