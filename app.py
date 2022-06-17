@@ -71,15 +71,21 @@ def frame_change():
     pred_range = st.session_state.range
     
     l = frame_range[0] - pred_range[0]
-    if l > 0:
-        _l = st.session_state.preds_list[l:]
-        _r = utl.get_features_list(tffile.name, pred_range[1], frame_range[1])
-    else:
-        _l = utl.get_features_list(tffile.name, frame_range[0], pred_range[0])
-        _r = st.session_state.preds_list[: frame_range[1] - pred_range[0]]
-    st.session_state.range = frame_range
-    st.session_state.preds_list = np.array([*_l, *_r])
-    
+    if l < 20:
+        if l > 0:
+            _l = st.session_state.preds_list[l:]
+            _r = utl.get_features_list(tffile.name, pred_range[1], frame_range[1])
+        else:
+            _l = utl.get_features_list(tffile.name, frame_range[0], pred_range[0])
+            _r = st.session_state.preds_list[: frame_range[1] - pred_range[0]]
+        st.session_state.range = frame_range
+        st.session_state.preds_list = np.array([*_l, *_r])
+    elif l > 20:
+        st.session_state.range = frame_range
+        st.session_state.preds_list = get_preds_list(tffile.name, frame_range[0], frame_range[1])
+
+
+
 def get_preds_list():
     fr = st.session_state.range
     temporal = utl.get_features_list(tffile.name, fr[0], fr[1])
@@ -107,11 +113,9 @@ def video_initial():
             st.session_state.no_frame = 20 
             st.session_state.range = [0, 19]
             
-    
     if 'video' not in st.session_state:
         print('create_data')
         st.session_state.video = DEMO_VIDEO
-        
     if 'no_frame' not in st.session_state:
         st.session_state.no_frame = 20
     if 'range' not in st.session_state:
@@ -119,7 +123,7 @@ def video_initial():
     if 'preds_list' not in st.session_state:
         st.session_state.preds_list = get_preds_list()
 
-        
+    frame_change()
     update_frame()
     
 def main():
@@ -164,7 +168,7 @@ if __name__ == '__main__':
     video_initial()
     frame_slider = st.slider('Frame', min_value=20,
                              max_value=int(utl.get_total_frame(tffile.name)), 
-                             key='no_frame', on_change=frame_change)
+                             key='no_frame')
     try:
         main()
     except SystemExit:
