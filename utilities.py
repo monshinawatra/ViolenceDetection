@@ -5,7 +5,7 @@ from keras.applications import VGG16
 from collections import deque
 from keras.models import Model, Sequential
 from keras.layers import LSTM, Dense, Activation
-
+from threading import Thread
 image_model = VGG16(include_top=True, weights='imagenet')
 transfer_layer = image_model.get_layer('fc2')
 image_model_transfer = Model(inputs=image_model.input,
@@ -40,6 +40,8 @@ def get_frame(vid_path: str, frame: int):
 def get_total_frame(vid_path: str):
     cap = cv2.VideoCapture(vid_path)
     total_frames = cap.get(cv2.CAP_PROP_FRAME_COUNT)
+    cap.release()
+    cv2.destroyAllWindows()
     return int(total_frames)
 
 
@@ -50,15 +52,28 @@ def predict(pred_list: list):
         prob = pred[0, class_index]
     return prob, class_index
 
-
-def get_features_list(frames: np.ndarray):
+import time
+def get_features_list(vid_path: str, 
+                      start: int , 
+                      stop: int):
+    time_start = time.time()
     images = deque()
-    for frame in frames:
+    cap = cv2.VideoCapture(vid_path)
+    c = start
+    for _ in range(start, stop):
+        ret, frame = cap.read()
+        if not ret:
+            break
         img = cv2.resize(frame, (224, 224))
-        img = img.astype(np.float32)/255.
+        img = img.astype(np.float64)/255.
         prediction = image_model_transfer.predict(np.expand_dims(img, 0))
         images.append(prediction[0])
+
+    cap.release()
+    cv2.destroyAllWindows()
+    print("time used ", time.time() - time_start)
     return np.array(images)
+
 
 def get_frames(vid_path: str, start: int, stop: int):
     frames = []
@@ -67,3 +82,8 @@ def get_frames(vid_path: str, start: int, stop: int):
         frames.append(get_frame(vid_path, count))
         count += 1
     return frames
+
+def raw_predict(frames: list):
+    raw = get_features_list(frames)
+    return predict(raw)
+    
