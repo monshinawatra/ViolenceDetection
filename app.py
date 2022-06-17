@@ -5,6 +5,8 @@ import utilities as utl
 from stqdm import stqdm
 import numpy as np
 import sys
+from collections import deque
+
 
 def draw_bboxes(bboxes, cur_frame):
     people = [ (int(p['xmin']), int(p['ymin']),
@@ -34,7 +36,7 @@ def probabiliy_label(prob: float, class_index: int):
     class_css = (f"""
                 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css" integrity="sha512-KfkfwYDsLkIlwQp6LFnl8zNdLGxu9YAA1QvwINks4PhcElQSvqcyVLLD9aMhXd13uQjoXtEKNosOWaZqXgel0g==" crossorigin="anonymous" referrerpolicy="no-referrer" />
                 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
-                <div class="container" style="padding: 0% 30%; text-align: center;">
+                <div class="container" style="padding: 0% 25%; text-align: center;">
                     <div class="row">
                         <div class="col-sm-6">
                             {first_icon[0]} {first_icon[1]}% </span>
@@ -47,8 +49,6 @@ def probabiliy_label(prob: float, class_index: int):
                  """)
     progress_label.markdown(class_css, unsafe_allow_html=True)
 
-def create_data():
-    tfdata.read()
     
 def get_frame(no_frame):
     # url = 'http://127.0.0.1:8000/frame/'
@@ -62,18 +62,36 @@ def get_frame(no_frame):
         return utl.get_frame(tffile.name, no_frame)
     except:
         print('But it out off range.. turnin to 20')
-        st.session_state.no_fram = 20
+        st.session_state.no_frame = 20
         return utl.get_frame(tffile.name, 19)
 
+def frame_change():
+    no_frame = st.session_state.no_frame
+    frame_range = (no_frame-20, no_frame)
+    pred_range = st.session_state.range
+    
+    l = frame_range[0] - pred_range[0]
+    if l > 0:
+        _l = st.session_state.preds_list[l:]
+        _r = utl.get_features_list(tffile.name, pred_range[1], frame_range[1])
+    else:
+        _l = utl.get_features_list(tffile.name, frame_range[0], pred_range[0])
+        _r = st.session_state.preds_list[: frame_range[1] - pred_range[0]]
+    st.session_state.range = frame_range
+    st.session_state.preds_list = np.array([*_l, *_r])
+    
+def get_preds_list():
+    fr = st.session_state.range
+    temporal = utl.get_features_list(tffile.name, fr[0], fr[1])
+    print('Size of features', sys.getsizeof(temporal))
+    return temporal
+      
 def update_frame():
     print('update')
-    no_frame = st.session_state.no_frame
-    temporal = utl.get_features_list(tffile.name, no_frame-20, no_frame)
-    print('Size of features', sys.getsizeof(temporal))
-    prob, class_id = utl.predict(temporal)
+    prob, class_id = utl.predict(st.session_state.preds_list)
     probabiliy_label(prob, class_id)
     frame = get_frame(st.session_state.no_frame - 1)
-    img_frame.image(frame)
+    img_frame.image(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
 
 
 def video_initial():
@@ -83,9 +101,23 @@ def video_initial():
         
     else:
         tffile.write(video_file.read())
+        if video_file.name != st.session_state.video:
+            print('video change create_data..')
+            st.session_state.video = video_file.name
+            st.session_state.no_frame = 20 
+            st.session_state.range = [0, 19]
+            
+    
+    if 'video' not in st.session_state:
+        print('create_data')
+        st.session_state.video = DEMO_VIDEO
         
     if 'no_frame' not in st.session_state:
         st.session_state.no_frame = 20
+    if 'range' not in st.session_state:
+        st.session_state.range = [0, 20]
+    if 'preds_list' not in st.session_state:
+        st.session_state.preds_list = get_preds_list()
 
         
     update_frame()
@@ -117,7 +149,6 @@ if __name__ == '__main__':
     
     DEMO_VIDEO = 'dataset/Test/Violence/v_FTSN_-_5.mp4'
     tffile = tempfile.NamedTemporaryFile(suffix='.mp4', delete=False)
-    tfdata = tempfile.NamedTemporaryFile(suffix='.h5', delete=False)
     
     
     video_label = st.markdown("""
@@ -126,14 +157,14 @@ if __name__ == '__main__':
                               <h2>Video frame</h2>
                               </center>
                               """, unsafe_allow_html=True)
-    progress_label = st.empty()
+    _, progress_label, _ = st.columns([0.2, 1.0, 0.2])
     
     _, img_frame, _ = st.columns([0.2, 1.0, 0.2])
 
     video_initial()
     frame_slider = st.slider('Frame', min_value=20,
                              max_value=int(utl.get_total_frame(tffile.name)), 
-                             key='no_frame')
+                             key='no_frame', on_change=frame_change)
     try:
         main()
     except SystemExit:
