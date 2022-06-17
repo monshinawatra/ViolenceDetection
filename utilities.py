@@ -70,7 +70,6 @@ def get_features_list(vid_path: str,
         images.append(prediction[0])
 
     cap.release()
-    cv2.destroyAllWindows()
     print("time used ", time.time() - time_start)
     return np.array(images)
 
