@@ -9,3 +9,5 @@ matplotlib
 seaborn
 tensorflow-cpu
 torch
+psutil
+torch==1.11+cpu
