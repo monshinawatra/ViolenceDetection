@@ -41,7 +41,6 @@ def get_total_frame(vid_path: str):
     cap = cv2.VideoCapture(vid_path)
     total_frames = cap.get(cv2.CAP_PROP_FRAME_COUNT)
     cap.release()
-    cv2.destroyAllWindows()
     return int(total_frames)
 
 
