@@ -2,10 +2,7 @@ import streamlit as st
 import cv2
 import tempfile
 import utilities as utl
-from stqdm import stqdm
 import numpy as np
-import sys
-from collections import deque
 
 
 def draw_bboxes(bboxes, cur_frame):
@@ -51,13 +48,6 @@ def probabiliy_label(prob: float, class_index: int):
 
     
 def get_frame(no_frame):
-    # url = 'http://127.0.0.1:8000/frame/'
-    # params = {
-    #     'path': tffile.name,
-    #     'no_frame': no_frame
-    # }
-    # response = requests.get(url, params=params)
-    # print(response.json())
     try:
         return utl.get_frame(tffile.name, no_frame)
     except:
@@ -89,16 +79,14 @@ def frame_change():
 def get_preds_list():
     fr = st.session_state.range
     temporal = utl.get_features_list(tffile.name, fr[0], fr[1])
-    print('Size of features', sys.getsizeof(temporal))
     return temporal
       
 def update_frame():
     print('update')
-    frame_change()
-    prob, class_id = utl.predict(st.session_state.preds_list)
-    probabiliy_label(prob, class_id)
     frame = get_frame(st.session_state.no_frame - 1)
-    img_frame.image(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
+    img_frame.image(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB), use_column_width=True)
+
+
 
 
 def video_initial():
@@ -112,7 +100,8 @@ def video_initial():
             print('video change create_data..')
             st.session_state.video = video_file.name
             st.session_state.no_frame = 20 
-            st.session_state.range = [0, 19]
+            st.session_state.range = [0, 20]
+            st.session_state.preds_list = get_preds_list()
             
     if 'video' not in st.session_state:
         print('create_data')
@@ -144,6 +133,10 @@ def main():
     st.sidebar.button('Extract Video')
     st.sidebar.markdown('---')
 
+def predict_img():
+    frame_change()
+    prob, class_id = utl.predict(st.session_state.preds_list)
+    probabiliy_label(prob, class_id)
 
 if __name__ == '__main__':
     st.sidebar.write(open('html/header.txt').read(), 
@@ -170,6 +163,11 @@ if __name__ == '__main__':
     frame_slider = st.slider('Frame', min_value=20,
                              max_value=int(utl.get_total_frame(tffile.name)), 
                              key='no_frame')
+    
+    _, pred_button, _ = st.columns([0.8, 0.2, 0.8])
+    with pred_button:
+        st.button('Predict', on_click=predict_img)
+    
     try:
         main()
     except SystemExit:

@@ -1,30 +1,16 @@
 import cv2
 import numpy as np
-from keras.models import Model
+from keras.models import Model, load_model
 from keras.applications import VGG16
-from collections import deque
-from keras.models import Model, Sequential
-from keras.layers import LSTM, Dense, Activation
-from threading import Thread
+from keras.models import Model
+
 image_model = VGG16(include_top=True, weights='imagenet')
 transfer_layer = image_model.get_layer('fc2')
 image_model_transfer = Model(inputs=image_model.input,
                              outputs=transfer_layer.output)
+
 CLASSES = ['NonViolence', 'Violence', '']
-
-def get_lstm_model():
-    model = Sequential()
-    model.add(LSTM(512, input_shape=(20, 4096)))
-    model.add(Dense(1024))
-    model.add(Activation('relu'))
-    model.add(Dense(50))
-    model.add(Activation('sigmoid'))
-    model.add(Dense(2))
-    model.add(Activation('softmax'))
-    return model
-
-
-model_ = get_lstm_model()
+model_ = load_model('model/lstm.h5')
 model_.load_weights('model/vggLSTMv4_2/model_weightsv4_2.h5')
 
 
@@ -56,7 +42,7 @@ def get_features_list(vid_path: str,
                       start: int , 
                       stop: int):
     time_start = time.time()
-    images = deque()
+    images = []
     cap = cv2.VideoCapture(vid_path)
     c = start
     for _ in range(start, stop):

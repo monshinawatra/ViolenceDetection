@@ -1,0 +1,13 @@
+keras==2.9.0
+numpy==1.22.4
+stqdm==0.0.4
+streamlit==1.10.0
+tqdm==4.64.0
+opencv-python-headless
+tensorflow
+h5py
+torch
+pyyaml
+matplotlib
+torchvision
+seaborn
