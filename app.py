@@ -71,7 +71,7 @@ def frame_change():
     pred_range = st.session_state.range
     
     l = frame_range[0] - pred_range[0]
-    if l < 20:
+    if abs(l) < 20:
         if l > 0:
             _l = st.session_state.preds_list[l:]
             _r = utl.get_features_list(tffile.name, pred_range[1], frame_range[1])
@@ -80,9 +80,9 @@ def frame_change():
             _r = st.session_state.preds_list[: frame_range[1] - pred_range[0]]
         st.session_state.range = frame_range
         st.session_state.preds_list = np.array([*_l, *_r])
-    elif l > 20:
+    elif abs(l) > 20:
         st.session_state.range = frame_range
-        st.session_state.preds_list = get_preds_list(tffile.name, frame_range[0], frame_range[1])
+        st.session_state.preds_list = get_preds_list()
 
 
 
@@ -94,6 +94,7 @@ def get_preds_list():
       
 def update_frame():
     print('update')
+    frame_change()
     prob, class_id = utl.predict(st.session_state.preds_list)
     probabiliy_label(prob, class_id)
     frame = get_frame(st.session_state.no_frame - 1)
@@ -123,7 +124,7 @@ def video_initial():
     if 'preds_list' not in st.session_state:
         st.session_state.preds_list = get_preds_list()
 
-    frame_change()
+    
     update_frame()
     
 def main():
