@@ -3,7 +3,7 @@ import cv2
 import tempfile
 import utilities as utl
 import numpy as np
-
+import os, psutil
 
 def draw_bboxes(bboxes, cur_frame):
     people = [ (int(p['xmin']), int(p['ymin']),
@@ -172,4 +172,5 @@ if __name__ == '__main__':
         main()
     except SystemExit:
         pass
+    print(psutil.Process(os.getpid()).memory_info().rss / 1024 ** 2)
     # check_size()
