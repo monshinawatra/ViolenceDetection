@@ -2,7 +2,6 @@ import cv2
 import numpy as np
 from keras.models import Model, load_model
 from keras.applications import VGG16
-from keras.models import Model
 
 image_model = VGG16(include_top=True, weights='imagenet')
 transfer_layer = image_model.get_layer('fc2')
@@ -44,8 +43,9 @@ def get_features_list(vid_path: str,
     time_start = time.time()
     images = []
     cap = cv2.VideoCapture(vid_path)
-    c = start
-    for _ in range(start, stop):
+    
+    for i in range(start, stop):
+        cap.set(cv2.CAP_PROP_POS_FRAMES, i)
         ret, frame = cap.read()
         if not ret:
             break
