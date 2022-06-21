@@ -40,7 +40,7 @@ def pred_video(vid_path, image_model, lstm_model):
         frame_height = int(cap.get(4))
 
         r = os.path.dirname(args.write_vid)
-        if not os.path.exists(r):
+        if not os.path.exists(r) and len(r) > 0:
             os.makedirs(r)
 
         out = cv2.VideoWriter(args.write_vid, 
@@ -84,7 +84,8 @@ def pred_video(vid_path, image_model, lstm_model):
         df = pd.DataFrame(violence_frequency).set_index('no_frame')
 
         r = os.path.dirname(args.write_csv)
-        if not os.path.exists(r):
+            
+        if not os.path.exists(r) and len(r) > 0:
             os.makedirs(r)
 
         if os.path.exists(args.write_csv):
@@ -140,5 +141,6 @@ if __name__ == "__main__":
     if args.write_csv != None: 
         print('- write csv -> ', args.write_csv)
         args.write_csv = args.write_csv.replace("'", '').replace('"', '')
-    
+        
+    args.dir.replace("'", '').replace('"', '')
     pred_video(selected_video, image_model, model_)

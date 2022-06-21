@@ -11,7 +11,7 @@ image_model_transfer = Model(inputs=image_model.input,
 CLASSES = ['NonViolence', 'Violence', '']
 # model_ = load_model('model/vggLSTMv4/modelv4_5.h5')
 model_ = get_model()
-model_.load_weights('model/vggLSTMv4/w_model_weightsv4_5.h5')
+model_.load_weights('model/vggLSTMv4/w_modelv4_5.h5')
 
 
 def get_frame(vid_path: str, frame: int):
