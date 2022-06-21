@@ -2,7 +2,7 @@ import cv2
 import os
 import random
 import numpy as np
-from keras.models import Model, load_model
+from keras.models import Model
 from keras.applications import VGG16
 from collections import deque
 import pandas as pd
@@ -118,7 +118,7 @@ if __name__ == "__main__":
     #model_ = load_model('model/vggLSTMv4/modelv4_4.h5')
 
     model_ = get_model()
-    model_.load_weights('model/vggLSTMv4/w_modelv4_4.h5')
+    model_.load_weights('model/vggLSTMv4/w_modelv4_5.h5')
 
     # Select video
     if args.random == True:

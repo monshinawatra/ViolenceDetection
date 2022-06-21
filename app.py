@@ -93,8 +93,6 @@ def variables_initial():
         st.session_state.range = [0, 20]
     if 'preds_list' not in st.session_state:
         st.session_state.preds_list = get_preds_list(0, 20)
-    if 'box_color' not in st.session_state:
-        st.session_state.box_color = '#47E242'
 
 
 def on_change_video():

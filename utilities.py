@@ -2,15 +2,16 @@ import cv2
 import numpy as np
 from keras.models import Model, load_model
 from keras.applications import VGG16
-
+from get_model import get_model
 
 image_model = VGG16(include_top=True, weights='imagenet')
 transfer_layer = image_model.get_layer('fc2')
 image_model_transfer = Model(inputs=image_model.input,
                              outputs=transfer_layer.output)
 CLASSES = ['NonViolence', 'Violence', '']
-model_ = load_model('model/vggLSTMv4/modelv4_4.h5')
-# model_.load_weights('model/vggLSTMv4_2/model_weightsv4_2.h5')
+# model_ = load_model('model/vggLSTMv4/modelv4_5.h5')
+model_ = get_model()
+model_.load_weights('model/vggLSTMv4/w_model_weightsv4_5.h5')
 
 
 def get_frame(vid_path: str, frame: int):
