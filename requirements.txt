@@ -8,4 +8,3 @@ matplotlib
 seaborn
 tensorflow-cpu
 torch
-torch
