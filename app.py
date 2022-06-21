@@ -12,23 +12,6 @@ def loading(func, args):
     loading_.empty()
     return ret
 
-def draw_bboxes(bboxes, cur_frame):
-    people = [ (int(p['xmin']), int(p['ymin']),
-            int(p['xmax']), int(p['ymax']))
-            for p in
-            [bboxes.pandas().xyxy[0].iloc[i, 0:4]
-            for i in range(bboxes.pandas().xyxy[0].shape[0])]]
-    
-    c = tuple(int(st.session_state.box_color.replace('#', '')[i:i+2], 
-                      16) for i in (0, 2, 4))
-
-    for p in people:
-        cv2.rectangle(cur_frame, 
-                      (p[0], p[1]), (p[2], p[3]), 
-                      (c[2], c[1], c[0]), 1)
-
-    return cur_frame
-
 
 def probabiliy_label(prob: float, class_index: int):
     icons = {0: open('html/nonviolence_icon.txt', 'r').read(),
@@ -65,10 +48,8 @@ def get_frame(no_frame):
         return utl.get_frame(tffile.name, 19)
 
 
-
-
 def frame_change():
-    
+    print('--frame change', sep='')
     no_frame = st.session_state.no_frame
     frame_range = (no_frame-20, no_frame)
     pred_range = st.session_state.range
@@ -76,7 +57,7 @@ def frame_change():
     l = frame_range[0] - pred_range[0]
     st.session_state.range = frame_range
     if abs(l) < 20:
-        
+        print(f'less than {abs(l)}')
         _l = st.session_state.preds_list[l:] if l > 0 else \
             utl.get_features_list(tffile.name, frame_range[0], pred_range[0])
             
@@ -86,36 +67,23 @@ def frame_change():
             
         st.session_state.preds_list = np.array([*_l, *_r])
     elif abs(l) > 20:
-        print('too long no data.. ')
+        print('too long')
         st.session_state.preds_list = \
             loading(get_preds_list, (frame_range[0], frame_range[1]))
 
 
 def get_preds_list(start: int, stop: int):
-    print('-get- range', start, stop)
     temporal = loading(utl.get_features_list, (tffile.name, start, stop)) 
     return temporal
 
 
 def update_frame():
-    print('update')
+    print('--update')
     frame = get_frame(st.session_state.no_frame - 1)
     img_frame.image(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB), use_column_width=True)
 
 
-def video_initial():
-    print('init')
-    if not video_file:
-        tffile.name = DEMO_VIDEO
-    else:
-        tffile.write(video_file.read())
-        if video_file.name != st.session_state.video:
-            print('video change create_data..')
-            st.session_state.video = video_file.name
-            st.session_state.no_frame = 20 
-            st.session_state.range = [0, 20]
-            st.session_state.preds_list = get_preds_list(0, 20)
-            
+def variables_initial():
     if 'video' not in st.session_state:
         print('create_data')
         st.session_state.video = DEMO_VIDEO
@@ -125,35 +93,46 @@ def video_initial():
         st.session_state.range = [0, 20]
     if 'preds_list' not in st.session_state:
         st.session_state.preds_list = get_preds_list(0, 20)
+    if 'box_color' not in st.session_state:
+        st.session_state.box_color = '#47E242'
+
+
+def on_change_video():
+    print('----- change video create_data..')
+    st.session_state.video = video_file.name
+    st.session_state.no_frame = 20 
+    st.session_state.range = [0, 20]
+    st.session_state.preds_list = get_preds_list(0, 20)
+
+
+def video_initial():
+    if not video_file:
+        tffile.name = DEMO_VIDEO
+    else:
+        tffile.write(video_file.read())
+        if video_file.name != st.session_state.video:
+            on_change_video()
+            
+    variables_initial()
     update_frame()
-    
-    
-def main():
-    st.sidebar.markdown('---')
-    st.sidebar.write('Detection')
-    st.sidebar.slider('NMS IoU', min_value=0.01,
-                      max_value=1.0, value=0.45, step=0.01, key='iou')
-    st.sidebar.slider('Confidence', min_value=0.01,
-                      max_value=1.0, value=0.45, step=0.01, key='conf')
-    color = st.sidebar.color_picker('Bounding box color',
-                                    value='#47E242',
-                                    key='box_color')
-    st.sidebar.markdown('---')
-    st.sidebar.write('Video Setting (In develop...)')
-    save_img = st.sidebar.checkbox('Save detection image')
-    enabled_gpu = st.sidebar.checkbox('Enable GPU')
-    st.sidebar.button('Extract Video')
-    st.sidebar.markdown('---')
 
-
+    
 def predict_img():
     frame_change()
-    print('range before prob', st.session_state.range)
     prob, class_id = utl.predict(st.session_state.preds_list)
     probabiliy_label(prob, class_id)
+    
+
+def main():
+    st.sidebar.markdown('---')
+    st.sidebar.write('หลักการทำงาน')
+    st.sidebar.write('เลื่อนแถบเฟรมด้านล่าง แล้วกด Predict เพื่อทำนายว่าเกิดความรุนแรงหรือไม่')
+    st.sidebar.write('โดยโมเดลจะอิงจาก 20 frames ก่อนหน้าจนถึงปัจจุบัน')
+    st.sidebar.markdown('---')
 
 
 if __name__ == '__main__':
+    print('---------------------')
     st.sidebar.write(open('html/header.txt').read(), 
                      unsafe_allow_html=True)
     st.markdown(open('html/sidebar.txt').read(), unsafe_allow_html=True)
@@ -175,6 +154,7 @@ if __name__ == '__main__':
     _, img_frame, _ = st.columns([0.2, 1.0, 0.2])
 
     video_initial()
+    
     frame_slider = st.slider('Frame', min_value=20,
                              max_value=int(utl.get_total_frame(tffile.name)), 
                              key='no_frame')
@@ -187,5 +167,6 @@ if __name__ == '__main__':
         main()
     except SystemExit:
         pass
-    print(psutil.Process(os.getpid()).memory_info().rss / 1024 ** 2)
-    # check_size()
+    
+    print('--ram uses', psutil.Process(os.getpid()).memory_info().rss / 1024 ** 2)
+    print('---------------------')
