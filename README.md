@@ -13,7 +13,7 @@ pip install -r requirements.txt
 python predict.py --dir ["dir"] --write-vid [output path].avi --write-csv [output path].csv
 ```
 
-example of csv file
 
+Example of output
 
 ![plot](https://github.com/monshinawatra/ViolenceDetection/blob/main/preview/output.png?raw=true)
